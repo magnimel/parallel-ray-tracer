@@ -1,0 +1,23 @@
+# CMake build directory
+/build/
+/out/
+*.ppm
+
+# IDE/user-specific stuff
+*.user
+*.swp
+*.suo
+*.vcxproj*
+*.xcodeproj*
+CMakeCache.txt
+CMakeFiles/
+.DS_Store
+
+# Compiled objects/binaries
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.dylib
+*.exe
