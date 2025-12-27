@@ -21,4 +21,4 @@ add_custom_command(
   VERBATIM
 )
 
-add_custom_target(render ALL DEPENDS ${OUT_DIR}/image.ppm )
+add_custom_target(render DEPENDS ${OUT_DIR}/image.ppm )
