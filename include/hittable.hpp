@@ -1,6 +1,9 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
+#include "vec3.hpp"
+#include "ray.hpp"
+
 class hit_record {
     public:
         point3 p;

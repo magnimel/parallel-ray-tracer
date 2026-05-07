@@ -24,8 +24,8 @@ inline double degrees_to_radians(double degrees) {
 }
 
 inline double random_double() {
-    std::mt19937 generator;
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::mt19937 generator;
     return distribution(generator);
 }
 
@@ -36,8 +36,8 @@ inline double random_double(double min, double max) {
 // Common Headers
 
 #include "vec3.hpp"
+#include "interval.hpp"
 #include "color.hpp"
 #include "ray.hpp"
-#include "interval.hpp"
 
 #endif

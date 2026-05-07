@@ -12,15 +12,15 @@ public:
         return max - min;
     }
 
-    bool contains(double x) {
+    bool contains(double x) const {
         return x >= min && x <= max;
     }
 
-    bool surrounds(double x) {
+    bool surrounds(double x) const {
         return x > min && x < max;
     }
 
-    double clamp(double x) {
+    double clamp(double x) const {
         if (x < min) return min;
         if (x > max) return max;
         return x;
