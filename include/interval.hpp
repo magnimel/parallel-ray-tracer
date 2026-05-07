@@ -20,6 +20,12 @@ public:
         return x > min && x < max;
     }
 
+    double clamp(double x) {
+        if (x < min) return min;
+        if (x > max) return max;
+        return x;
+    }
+
     static const interval empty, universe;
     
 };

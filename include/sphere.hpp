@@ -2,7 +2,6 @@
 #define SPHERE_H
 
 #include "hittable.hpp"
-#include "utility.hpp"
 
 class sphere : public hittable {
 public:

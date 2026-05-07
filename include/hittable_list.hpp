@@ -1,10 +1,8 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
-#include "utility.hpp"
 #include "hittable.hpp"
 #include <vector>
-
 
 class hittable_list : public hittable {
     public:

@@ -1,8 +1,10 @@
-.PHONY: compile rebuild
+.PHONY: compile rebuild clean
 
 compile: 
 	@cmake --build build --config release --target render
 
 rebuild:
-	rm -rf build out
 	@cmake -S . -B build
+
+clean:
+	rm -rf build out

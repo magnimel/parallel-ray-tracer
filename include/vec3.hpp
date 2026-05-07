@@ -1,8 +1,6 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#include "utility.hpp"
-
 class vec3 {
   public:
     double e[3];
