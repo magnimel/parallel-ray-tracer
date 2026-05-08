@@ -10,7 +10,7 @@ class camera {
 public:
     double aspect_ratio     = 1.0;
     int image_width         = 100;
-    int samples_per_pixels  = 10;
+    int samples_per_pixel   = 10;
     int max_depth           = 10;
 
     double vfov             = 90; // vertical field of view
@@ -31,7 +31,7 @@ public:
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             for (int i = 0; i < image_width; i++) {
                 color pixel_color(0.0, 0.0, 0.0);
-                for(int sample = 0; sample < samples_per_pixels; sample++) {
+                for(int sample = 0; sample < samples_per_pixel; sample++) {
                     ray r = get_ray(i, j);
                     pixel_color += ray_color(r, max_depth, world);
                 }
@@ -57,7 +57,7 @@ private:
     void initialize() {
         image_height = int(image_width / aspect_ratio);
         image_height = (image_height > 0) ? image_height : 1;
-        pixel_samples_scale = 1.0 / samples_per_pixels;
+        pixel_samples_scale = 1.0 / samples_per_pixel;
 
         center = lookfrom;
 
