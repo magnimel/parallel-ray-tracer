@@ -3,12 +3,16 @@ project(ray-tracing VERSION 1.0.0
                     DESCRIPTION "Basic Ray Tracer"
                     LANGUAGES CXX)
 
+find_package(OpenMP)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(ray-tracing src/main.cpp)
 
 target_include_directories(ray-tracing PRIVATE include)
+target_link_libraries(ray-tracing PRIVATE OpenMP::OpenMP_CXX)
+
 
 set(OUT_DIR ${CMAKE_SOURCE_DIR}/out)
 file(MAKE_DIRECTORY ${OUT_DIR})
