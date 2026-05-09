@@ -5,24 +5,18 @@ project(ray-tracing VERSION 1.0.0
 
 find_package(OpenMP)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_executable(ray-tracing src/main.cpp)
+add_executable(ray-tracing src/main.cpp src/scenes.cpp)
 
 target_include_directories(ray-tracing PRIVATE include)
 target_link_libraries(ray-tracing PRIVATE OpenMP::OpenMP_CXX)
 
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/renders)
 
-set(OUT_DIR ${CMAKE_SOURCE_DIR}/out)
-file(MAKE_DIRECTORY ${OUT_DIR})
-
-add_custom_command(
-  OUTPUT ${OUT_DIR}/image.ppm
-  COMMAND ray-tracing > ${OUT_DIR}/image.ppm
-  DEPENDS ray-tracing
-  COMMENT "Rendering image.ppm"
-  VERBATIM
+target_compile_definitions(ray-tracing PRIVATE
+    PROJECT_ROOT="${CMAKE_SOURCE_DIR}"
+    RENDER_DIR="${CMAKE_SOURCE_DIR}/renders"
+    LOG_FILE="${CMAKE_SOURCE_DIR}/render_log.csv"
 )
-
-add_custom_target(render DEPENDS ${OUT_DIR}/image.ppm )
