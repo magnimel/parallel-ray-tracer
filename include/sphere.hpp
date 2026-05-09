@@ -1,12 +1,15 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "hittable.hpp"
-#include "material.hpp"
+#include <hittable.hpp>
+#include <material.hpp>
+#include <vec3.hpp>
+#include <interval.hpp>
+#include "memory"
 
 class sphere : public hittable {
 public:
-    sphere(const point3& center, double radius, shared_ptr<material> mat) 
+    sphere(const point3& center, double radius, std::shared_ptr<material> mat) 
     : center(center), radius(std::fmax(0, radius)), mat(mat) {}
     
     bool hit(const ray &r, interval ray_t, hit_record &rec) const override {
@@ -41,7 +44,7 @@ public:
 private:
     point3 center;
     double radius;
-    shared_ptr<material> mat;
+    std::shared_ptr<material> mat;
 };
 
 #endif

@@ -4,13 +4,9 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
-#include <memory>
 #include <random>
-
-// C++ Std Usings
-
-using std::make_shared;
-using std::shared_ptr;
+#include <thread>
+#include <omp.h>
 
 // Constants
 
@@ -24,20 +20,26 @@ inline double degrees_to_radians(double degrees) {
 }
 
 inline double random_double() {
-    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator;
+    static thread_local std::mt19937 generator([] {
+        std::seed_seq seed {
+            std::random_device{}(),
+            std::random_device{}(),
+            static_cast<unsigned int>(
+                std::hash<std::thread::id>{}(std::this_thread::get_id())
+            ),
+            static_cast<unsigned int>(omp_get_thread_num())
+        };
+
+        return std::mt19937(seed);
+    }());
+
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+
     return distribution(generator);
 }
 
 inline double random_double(double min, double max) {
     return min + (max-min) * random_double();
 }
-
-// Common Headers
-
-#include "vec3.hpp"
-#include "interval.hpp"
-#include "color.hpp"
-#include "ray.hpp"
 
 #endif

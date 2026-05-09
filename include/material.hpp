@@ -1,8 +1,9 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include "hittable.hpp"
-#include "color.hpp"
+#include <hittable.hpp>
+#include <color.hpp>
+#include <ray.hpp>
 
 class material {
     public:
