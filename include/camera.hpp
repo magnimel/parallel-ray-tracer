@@ -1,9 +1,15 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "hittable.hpp"
-#include "material.hpp"
-#include "ray.hpp"
+#include <hittable.hpp>
+#include <material.hpp>
+#include <color.hpp>
+#include <vec3.hpp>
+#include <ray.hpp>
+#include <omp.h>
+#include <vector>
+#include <fstream>
+#include <atomic>
 
 class camera {
 
@@ -12,38 +18,67 @@ public:
     int image_width         = 100;
     int samples_per_pixel   = 10;
     int max_depth           = 10;
-
+    
     double vfov             = 90; // vertical field of view
     point3 lookfrom         = point3(0, 0, 0);
     point3 lookat           = point3(0, 0, -1);
     vec3 vup                = vec3(0, 1, 0);
-
+    
     double defocus_angle = 0; 
     double focus_dist = 10;
 
-    void render(const hittable &world) {
-
+void render(const hittable &world, const std::string& output_filename, int chunk_size, int threads) {
         initialize();
 
-        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        
+        std::ofstream out_file(output_filename);
+        if (!out_file) {
+            std::cerr << "Error: Could not open output file.\n";
+            return;
+        }
+        out_file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-        for (int j = 0; j < image_height; ++j) {
-            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+        std::atomic<int> scanlines_rendered(0);
+
+        #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(threads)
+        for (int j = 0; j < image_height; j++) {
             for (int i = 0; i < image_width; i++) {
                 color pixel_color(0.0, 0.0, 0.0);
                 for(int sample = 0; sample < samples_per_pixel; sample++) {
                     ray r = get_ray(i, j);
                     pixel_color += ray_color(r, max_depth, world);
                 }
-                write_color(std::cout, pixel_samples_scale * pixel_color);
+                framebuffer[j * image_width + i] = pixel_byte3(pixel_samples_scale * pixel_color);
+            }
+
+            int rendered = ++scanlines_rendered;
+            int progress = (rendered * 100) / image_height;
+            int bar_width = 50; 
+            int pos = (bar_width * rendered) / image_height;
+            
+            #pragma omp critical
+            {
+                std::clog << "\rRendering: [";
+                for (int k = 0; k < bar_width; ++k) {
+                    if (k < pos) std::clog << "=";
+                    else if (k == pos) std::clog << ">";
+                    else std::clog << " ";
+                }
+                std::clog << "] " << progress << " % " << std::flush;
             }
         }
 
-        std::clog << "\rDone.                 \n";
+        for(int j = 0; j < image_height; j++) {
+            for (int i = 0; i < image_width; i++) {
+                write_color(out_file, framebuffer[j * image_width + i]);
+            }
+        }
+        out_file.close();
     }
 
 
 private:
+    std::vector<byte3> framebuffer;
     int image_height;
     point3 center;
     double pixel_samples_scale;
@@ -57,6 +92,7 @@ private:
     void initialize() {
         image_height = int(image_width / aspect_ratio);
         image_height = (image_height > 0) ? image_height : 1;
+        framebuffer.resize(image_width * image_height);
         pixel_samples_scale = 1.0 / samples_per_pixel;
 
         center = lookfrom;
