@@ -11,6 +11,7 @@ renders/
 CMakeCache.txt
 CMakeFiles/
 .DS_Store
+.vscode
 
 # Compiled objects/binaries
 *.o
