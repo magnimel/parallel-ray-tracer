@@ -1,7 +1,6 @@
 # CMake build directory
-/build/
-/out/
-
+build/
+renders/
 
 # IDE/user-specific stuff
 *.user
