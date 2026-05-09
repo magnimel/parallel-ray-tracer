@@ -1,145 +1,98 @@
-#include "utility.hpp"
-#include "hittable.hpp"
-#include "hittable_list.hpp"
-#include "sphere.hpp"
-#include "camera.hpp"
+#include <hittable.hpp>
+#include <hittable_list.hpp>
+#include <material.hpp>
+#include <sphere.hpp>
+#include <camera.hpp>
+#include <scenes.hpp>
+#include <omp.h>
+#include <memory>
+#include <fstream>
+#include <filesystem>
 
-void hallow_glass_sphere(hittable_list& world, camera& cam);
-void spheres_with_depth_of_field(hittable_list& world, camera& cam);
-void wide_angle_of_view(hittable_list& world, camera& cam);
-void final_scene(hittable_list& world, camera& cam);
+
+namespace fs = std::filesystem;
+
+struct RenderConfig {
+    int scene_id = 1;
+    int chunk_size = 16;
+    int threads = omp_get_max_threads();
+};
+
+RenderConfig parse_args(int argc, char** argv) {
+    RenderConfig config;
+
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "--scene" && i + 1 < argc) {
+            config.scene_id = std::stoi(argv[++i]);
+        } else if (arg == "--chunk-size" && i + 1 < argc) {
+            config.chunk_size = std::stoi(argv[++i]);
+        } else if (arg == "--threads" && i + 1 < argc) {
+            config.threads = std::stoi(argv[++i]);
+        } else {
+            throw std::runtime_error("Unknown or incomplete argument: " + arg);
+        }
+    }
+
+    return config;
+}
+
+void run_log(
+    const RenderConfig& config,
+    const Scene& scene,
+    double total_seconds
+) {
+    fs::path log_path = fs::path(LOG_FILE);
+
+    bool file_exists = fs::exists(log_path);
+
+    std::ofstream log(log_path, std::ios::app);
+
+    if (!file_exists) {
+        log << "scene_id,scene_name,chunk_size,threads,total_seconds\n";
+    }
+
+    log << scene.id << ','
+        << scene.name << ','
+        << config.chunk_size << ','
+        << config.threads << ','
+        << total_seconds << '\n';
+
+    log.close();
+}
 
 int main(int argc, char *argv[]) {
+    auto config = parse_args(argc, argv);
 
-    hittable_list world;
-    camera cam;
+    omp_set_num_threads(config.threads);
 
-    //hallow_glass_sphere(world, cam);
-    //spheres_with_depth_of_field(world, cam);
-    //wide_angle_of_view(world, cam);
-    final_scene(world, cam);
+    auto scene = make_scene(config.scene_id);
 
-    cam.render(world);
+    fs::path output_path =
+        fs::path(RENDER_DIR) /
+        (scene.name +
+         "_chunk" + std::to_string(config.chunk_size) +
+         "_threads" + std::to_string(config.threads) +
+         ".ppm");
+
+    double start = omp_get_wtime();
+
+    scene.cam.render(
+        scene.world,
+        output_path.string(),
+        config.chunk_size,
+        config.threads
+    );
+
+    double end = omp_get_wtime();
+
+    double total_seconds = end - start;
+
+    std::cout << "\nFinished in " << total_seconds << " seconds.\n";
+
+    run_log(config, scene, total_seconds);
 
     return 0;
 }
 
-void wide_angle_of_view(hittable_list& world, camera& cam) {
-    auto R = std::cos(pi/4);
-
-    auto material_left  = make_shared<lambertian>(color(0,0,1));
-    auto material_right = make_shared<lambertian>(color(1,0,0));
-
-    world.add(make_shared<sphere>(point3(-R, 0, -1), R, material_left));
-    world.add(make_shared<sphere>(point3( R, 0, -1), R, material_right));
-
-    cam.aspect_ratio        = 16.0 / 9.0;
-    cam.image_width         = 400;
-    cam.samples_per_pixel   = 100;
-    cam.max_depth           = 50;
-
-    cam.vfov                = 90;
-
-}
-
-void hallow_glass_sphere(hittable_list& world, camera& cam) {
-    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    auto material_left   = make_shared<dielectric>(1.50);
-    auto material_bubble = make_shared<dielectric>(1.00 / 1.50);
-    auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
-
-    world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.2),   0.5, material_center));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.4, material_bubble));
-    world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-
-    cam.aspect_ratio        = 16.0 / 9.0;
-    cam.image_width         = 400;
-    cam.samples_per_pixel   = 100;
-    cam.max_depth           = 50;
-}
-
-void spheres_with_depth_of_field(hittable_list& world, camera& cam) {
-    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    auto material_left   = make_shared<dielectric>(1.50);
-    auto material_bubble = make_shared<dielectric>(1.00 / 1.50);
-    auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0);
-
-    world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.2),   0.5, material_center));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.4, material_bubble));
-    world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-
-    cam.aspect_ratio        = 16.0 / 9.0;
-    cam.image_width         = 400;
-    cam.samples_per_pixel   = 100;
-    cam.max_depth           = 50;
-
-    cam.vfov                = 20;
-    cam.lookfrom            = point3(-2,2,1);
-    cam.lookat              = point3(0,0,-1);
-    cam.vup                 = vec3(0,1,0);
-
-    cam.defocus_angle       = 10.0;
-    cam.focus_dist          = 3.4;
-}
-
-void final_scene(hittable_list& world, camera& cam) {
-
-    auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
-    world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
-
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
-            auto choose_mat = random_double();
-            point3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
-
-            if ((center - point3(4, 0.2, 0)).length() > 0.9) {
-                shared_ptr<material> sphere_material;
-
-                if (choose_mat < 0.8) {
-                    // diffuse
-                    auto albedo = color::random() * color::random();
-                    sphere_material = make_shared<lambertian>(albedo);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
-                } else if (choose_mat < 0.95) {
-                    // metal
-                    auto albedo = color::random(0.5, 1);
-                    auto fuzz = random_double(0, 0.5);
-                    sphere_material = make_shared<metal>(albedo, fuzz);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
-                } else {
-                    // glass
-                    sphere_material = make_shared<dielectric>(1.5);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
-                }
-            }
-        }
-    }
-
-    auto material1 = make_shared<dielectric>(1.5);
-    world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
-
-    auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
-    world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
-
-    auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
-    world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
-
-    cam.aspect_ratio      = 16.0 / 9.0;
-    cam.image_width       = 1200;
-    cam.samples_per_pixel = 500;
-    cam.max_depth         = 50;
-
-    cam.vfov              = 20;
-    cam.lookfrom          = point3(13,2,3);
-    cam.lookat            = point3(0,0,0);
-    cam.vup               = vec3(0,1,0);
-
-    cam.defocus_angle     = 0.6;
-    cam.focus_dist        = 10.0;
-}
