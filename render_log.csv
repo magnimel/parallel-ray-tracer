@@ -10,12 +10,29 @@ scene_id,scene_name,chunk_size,tile_size,threads,total_seconds
 4,final_scene,1,16,8,404.542
 4,final_scene,1,16,8,353.798
 4,final_scene,1,1,8,393.778
-3,spheres_with_depth_of_field,1,1,8,5.71321
-2,hallow_glass_sphere,16,16,1,2.23193
-2,hallow_glass_sphere,16,1,1,2.11193
 5,macro_marbles,16,1,8,14.4405
 5,macro_marbles,16,1,8,13.9054
 5,macro_marbles,16,1,8,13.6697
 5,macro_marbles,16,1,8,13.3924
 5,macro_marbles,1,16,8,13.4525
 5,macro_marbles,16,16,1,35.9198
+# motion blur
+5,macro_marbles,16,1,8,14.6359
+4,final_scene,16,1,8,17.7906
+4,final_scene,16,1,8,14.097
+# no BVH 
+1,final_scene,1,16,1,1348.18
+1,final_scene,1,1,1,1330
+# BVH 
+4,final_scene,16,1,8,120.159
+1,final_scene,1,16,8,111.663
+1,final_scene,1,1,1,311.503
+1,final_scene,1,16,1,321.018
+1,final_scene,16,1,8,104.915
+1,final_scene,1,16,8,102.291
+1,final_scene,1,32,8,110.389
+1,final_scene,32,1,8,101.134
+1,final_scene,16,8,8,109.853
+1,final_scene,64,1,8,101.808
+1,final_scene,1,8,8,101.357
+1,final_scene,32,1,8,99.2196
