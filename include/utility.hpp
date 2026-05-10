@@ -47,7 +47,7 @@ inline double random_double(double min, double max) {
 struct RenderConfig {
     int scene_id = 1;
     int chunk_size = 1;
-    int tile_size = 16;
+    int tile_size = 1;
     int threads = omp_get_max_threads();
 };
 
