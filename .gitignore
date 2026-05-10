@@ -1,6 +1,7 @@
 # CMake build directory
 build/
 renders/
+external/tracy/profiler/build/
 
 # IDE/user-specific stuff
 *.user
@@ -11,6 +12,8 @@ renders/
 CMakeCache.txt
 CMakeFiles/
 .DS_Store
+.vscode
+notes.txt
 
 # Compiled objects/binaries
 *.o
