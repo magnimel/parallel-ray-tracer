@@ -71,7 +71,7 @@ namespace {
         cam.focus_dist = 3.4;
     }
 
-    void final_scene(hittable_list &world, camera &cam) {
+    void final_scene(hittable_list &world, camera &cam, bool bouncing) {
 
         auto ground_material = std::make_shared<lambertian>(color(0.5, 0.5, 0.5));
         world.add(std::make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
@@ -89,6 +89,11 @@ namespace {
                         auto albedo = color::random() * color::random();
                         sphere_material = std::make_shared<lambertian>(albedo);
                         world.add(std::make_shared<sphere>(center, 0.2, sphere_material));
+
+                        if(bouncing) {
+                            auto center2 = center + vec3(0, random_double(0,.5), 0);
+                            world.add(std::make_shared<sphere>(center, center2, 0.2, sphere_material));
+                        }
                     } else if (choose_mat < 0.95) {
                         // metal
                         auto albedo = color::random(0.5, 1);
@@ -114,8 +119,8 @@ namespace {
         world.add(std::make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
 
         cam.aspect_ratio = 16.0 / 9.0;
-        cam.image_width = 1200;
-        cam.samples_per_pixel = 500;
+        cam.image_width = bouncing ? 400: 1200;
+        cam.samples_per_pixel = bouncing ? 100: 500;
         cam.max_depth = 50;
 
         cam.vfov = 20;
@@ -228,7 +233,7 @@ Scene make_scene(int scene_id) {
 
         case 4:
             scene.name = "final_scene";
-            final_scene(scene.world, scene.cam);
+            final_scene(scene.world, scene.cam, true);
             break;
 
         case 5:
