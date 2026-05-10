@@ -10,6 +10,9 @@
 #include <vector>
 #include <fstream>
 #include <atomic>
+#include <utility.hpp>
+#include <profiling.hpp>
+
 
 class camera {
 
@@ -27,9 +30,8 @@ public:
     double defocus_angle = 0; 
     double focus_dist = 10;
 
-void render(const hittable &world, const std::string& output_filename, int chunk_size, int threads) {
+    void render(const hittable &world, const std::string& output_filename, const RenderConfig& config) {
         initialize();
-
         
         std::ofstream out_file(output_filename);
         if (!out_file) {
@@ -38,44 +40,26 @@ void render(const hittable &world, const std::string& output_filename, int chunk
         }
         out_file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-        std::atomic<int> scanlines_rendered(0);
+        {
+            ZoneScopedN("render frame");
 
-        #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(threads)
-        for (int j = 0; j < image_height; j++) {
-            for (int i = 0; i < image_width; i++) {
-                color pixel_color(0.0, 0.0, 0.0);
-                for(int sample = 0; sample < samples_per_pixel; sample++) {
-                    ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, max_depth, world);
-                }
-                framebuffer[j * image_width + i] = pixel_byte3(pixel_samples_scale * pixel_color);
-            }
-
-            int rendered = ++scanlines_rendered;
-            int progress = (rendered * 100) / image_height;
-            int bar_width = 50; 
-            int pos = (bar_width * rendered) / image_height;
-            
-            #pragma omp critical
-            {
-                std::clog << "\rRendering: [";
-                for (int k = 0; k < bar_width; ++k) {
-                    if (k < pos) std::clog << "=";
-                    else if (k == pos) std::clog << ">";
-                    else std::clog << " ";
-                }
-                std::clog << "] " << progress << " % " << std::flush;
+            if (config.tile_size <= 1) {
+                render_scanlines(world, config);
+            } else {
+                render_tiles(world, config);
             }
         }
 
-        for(int j = 0; j < image_height; j++) {
-            for (int i = 0; i < image_width; i++) {
-                write_color(out_file, framebuffer[j * image_width + i]);
+        {
+            ZoneScopedN("write image");
+            for(int j = 0; j < image_height; j++) {
+                for (int i = 0; i < image_width; i++) {
+                    write_color(out_file, framebuffer[j * image_width + i]);
+                }
             }
         }
         out_file.close();
     }
-
 
 private:
     std::vector<byte3> framebuffer;
@@ -151,7 +135,6 @@ private:
     }
 
     color ray_color(const ray& r, int depth, const hittable &world) const {
-
         if (depth <= 0) {
             return color(0, 0, 0);
         }
@@ -170,6 +153,63 @@ private:
         auto a = 0.5*(unit_direction.y() + 1.0);
         return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
     }   
+
+    void render_scanlines(const hittable& world, const RenderConfig& config) {
+        #pragma omp parallel num_threads(config.threads)
+        {
+            set_profiler_thread_name(("worker " + std::to_string(omp_get_thread_num())).c_str());
+
+            #pragma omp for schedule(dynamic, config.chunk_size)
+            for (int j = 0; j < image_height; j++) {
+                ZoneScopedN("render scanline");
+                
+                for (int i = 0; i < image_width; i++) {
+                    framebuffer[j * image_width + i] = render_pixel(i, j, world);
+                }
+            }
+        }
+    }
+
+    void render_tiles(const hittable& world, const RenderConfig& config) {
+
+        int tiles_x = (image_width  + config.tile_size - 1) / config.tile_size;
+        int tiles_y = (image_height + config.tile_size - 1) / config.tile_size;
+
+        #pragma omp parallel num_threads(config.threads)
+        {
+            set_profiler_thread_name(("worker " + std::to_string(omp_get_thread_num())).c_str());
+
+            #pragma omp for schedule(dynamic, config.chunk_size)
+            for (int ty = 0; ty < tiles_y; ty++) {
+                for (int tx = 0; tx < tiles_x; tx++) {
+                    ZoneScopedN("render tile");
+
+                    int x0 = tx * config.tile_size;
+                    int y0 = ty * config.tile_size;
+
+                    int x1 = std::min(x0 + config.tile_size, image_width);
+                    int y1 = std::min(y0 + config.tile_size, image_height);
+
+                    for (int j = y0; j < y1; j++) {
+                        for (int i = x0; i < x1; i++) {
+                            framebuffer[j * image_width + i] = render_pixel(i, j, world);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    byte3 render_pixel(int i, int j, const hittable& world) const {
+        color pixel_color(0.0, 0.0, 0.0);
+
+        for (int sample = 0; sample < samples_per_pixel; sample++) {
+            ray r = get_ray(i, j);
+            pixel_color += ray_color(r, max_depth, world);
+        }
+
+        return pixel_byte3(pixel_samples_scale * pixel_color);
+    }
 
 };
 
