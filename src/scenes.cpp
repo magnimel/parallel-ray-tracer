@@ -4,6 +4,7 @@
 #include <material.hpp>
 #include <utility.hpp>
 #include <stdexcept>
+#include <bvh.hpp>
 #include <memory>
 
 
@@ -25,7 +26,7 @@ namespace {
 
         cam.vfov = 90;
     }
-    void hallow_glass_sphere(hittable_list &world, camera &cam) {
+    void hollow_glass_sphere(hittable_list &world, camera &cam) {
         auto material_ground = std::make_shared<lambertian>(color(0.8, 0.8, 0.0));
         auto material_center = std::make_shared<lambertian>(color(0.1, 0.2, 0.5));
         auto material_left = std::make_shared<dielectric>(1.50);
@@ -88,11 +89,12 @@ namespace {
                         // diffuse
                         auto albedo = color::random() * color::random();
                         sphere_material = std::make_shared<lambertian>(albedo);
-                        world.add(std::make_shared<sphere>(center, 0.2, sphere_material));
-
+                        
                         if(bouncing) {
                             auto center2 = center + vec3(0, random_double(0,.5), 0);
                             world.add(std::make_shared<sphere>(center, center2, 0.2, sphere_material));
+                        } else {
+                            world.add(std::make_shared<sphere>(center, 0.2, sphere_material));
                         }
                     } else if (choose_mat < 0.95) {
                         // metal
@@ -222,8 +224,8 @@ Scene make_scene(int scene_id) {
             break;
 
         case 2:
-            scene.name = "hallow_glass_sphere";
-            hallow_glass_sphere(scene.world, scene.cam);
+            scene.name = "hollow_glass_sphere";
+            hollow_glass_sphere(scene.world, scene.cam);
             break;
 
         case 3:
@@ -233,7 +235,7 @@ Scene make_scene(int scene_id) {
 
         case 4:
             scene.name = "final_scene";
-            final_scene(scene.world, scene.cam, true);
+            final_scene(scene.world, scene.cam, false);
             break;
 
         case 5:
@@ -249,6 +251,8 @@ Scene make_scene(int scene_id) {
         default:
             throw std::runtime_error("Invalid scene id: " + std::to_string(scene_id));
     }
+    
+    scene.world = hittable_list(std::make_shared<bvh_node>(scene.world));
 
     return scene;
 }
