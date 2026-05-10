@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.1.1)
+cmake_minimum_required(VERSION 3.28.3)
 project(ray-tracing VERSION 1.0.0 
                     DESCRIPTION "Basic Ray Tracer"
                     LANGUAGES CXX)
