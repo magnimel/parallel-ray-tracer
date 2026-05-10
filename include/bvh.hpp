@@ -25,17 +25,18 @@ class bvh_node : public hittable {
                                           : box_z_compare;
             
             size_t object_span = end - start;
+
             if (object_span == 1) {
                 left = right = objects[start];
             } else if (object_span == 2) {
                 left = objects[start];
                 right = objects[start+1];
             } else {
-                std::sort(std::begin(objects) + start, std::end(objects) + end, comparator);
+                std::sort(std::begin(objects) + start, std::begin(objects) + end, comparator);
 
-                size_t mid = start + end/2;
+                size_t mid = start + (end - start)/2;
                 left = std::make_shared<bvh_node>(objects, start, mid);
-                left = std::make_shared<bvh_node>(objects, mid, end);
+                right = std::make_shared<bvh_node>(objects, mid, end);
             }
         }
 
@@ -44,7 +45,7 @@ class bvh_node : public hittable {
                 return false;
 
             bool hit_left = left->hit(r, ray_t, rec);
-            bool hit_right = left->hit(r, interval(ray_t.min, hit_left ? rec.t : ray_t.max), rec);
+            bool hit_right = right->hit(r, interval(ray_t.min, hit_left ? rec.t : ray_t.max), rec);
 
             return hit_left || hit_right;
         }

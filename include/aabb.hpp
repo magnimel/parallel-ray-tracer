@@ -52,7 +52,7 @@ class aabb {
                     if(t0 < ray_t.max) ray_t.max = t0;
                 }
             
-                if (ray_t.min <= ray_t.max)
+                if (ray_t.max <= ray_t.min)
                     return false;
             }
             return true;
