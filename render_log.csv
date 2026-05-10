@@ -1,0 +1,11 @@
+scene_id,scene_name,chunk_size,tile_size,threads,total_seconds
+4,final_scene,16,16,8,565.495
+4,final_scene,16,16,8,642.943
+4,final_scene,16,16,8,588.7
+4,final_scene,16,16,8,594.691
+4,final_scene,16,1,8,326.072
+4,final_scene,16,1,8,323.599
+4,final_scene,16,16,8,629.212
+4,final_scene,1,16,8,404.542
+4,final_scene,1,16,8,353.798
+4,final_scene,1,1,8,393.778

@@ -6,6 +6,8 @@
 #include <limits>
 #include <random>
 #include <thread>
+#include <string>     
+#include <stdexcept>  
 #include <omp.h>
 
 // Constants
@@ -39,7 +41,37 @@ inline double random_double() {
 }
 
 inline double random_double(double min, double max) {
-    return min + (max-min) * random_double();
+    return min + (max - min) * random_double();
 }
+
+struct RenderConfig {
+    int scene_id = 1;
+    int chunk_size = 1;
+    int tile_size = 16;
+    int threads = omp_get_max_threads();
+};
+
+inline RenderConfig parse_args(int argc, char** argv) {
+    RenderConfig config;
+
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "--scene" && i + 1 < argc) {
+            config.scene_id = std::stoi(argv[++i]);
+        } else if (arg == "--chunk-size" && i + 1 < argc) {
+            config.chunk_size = std::stoi(argv[++i]);
+        } else if (arg == "--threads" && i + 1 < argc) {
+            config.threads = std::stoi(argv[++i]);
+        } else if (arg == "--tile-size" && i + 1 < argc) {
+            config.tile_size = std::stoi(argv[++i]);
+        } else {
+            throw std::runtime_error("Unknown or incomplete argument: " + arg);
+        }
+    }
+
+    return config;
+}
+
 
 #endif
