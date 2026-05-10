@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
     fs::path output_path =
         fs::path(RENDER_DIR) /
         (scene.name +
+         "_chunk" + std::to_string(config.chunk_size) +
          "_tile" + std::to_string(config.tile_size) +
          "_threads" + std::to_string(config.threads) +
          ".ppm");
