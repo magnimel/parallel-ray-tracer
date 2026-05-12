@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28.3)
 project(ray-tracing VERSION 1.0.0 
-                    DESCRIPTION "Basic Ray Tracer"
+                    DESCRIPTION "Parallel Monte Carlo Path Tracer"
                     LANGUAGES CXX)
 
 
